@@ -18,7 +18,7 @@ Follow these steps to get your website code generated:
 3. **Set up Ollama**: Follow the instructions provided by Ollama after installation to properly set it up.
 4. **Start Ollama**:
    - Open a terminal.
-   - Execute the command: `ollama run codellama`.
+   - Execute the command: `ollama run codellama` or `ollama run llama3` (LLAMA-3 was released on Apr 18, 2024. It is better as codellama runs LLAMA-2)
 5. **Download the Script**:
    - Download `main.py` from this GitHub repository.
 6. **Run the Script**:
