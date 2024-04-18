@@ -1,12 +1,12 @@
 import requests
 import json
 
-def generate_code_with_llama(prompt):
+def generate_code_with_llama(prompt, model_version):
     print("Sending request to LLaMA...")
     url = "http://localhost:11434/api/generate"
     detailed_prompt = f"Generate a complete single-file HTML webpage that includes CSS (and JavaScript if necessary) directly within the file. The page should meet the following specifications without any additional comments or narrative explanations: {prompt}"
     payload = {
-        "model": "codellama",
+        "model": model_version,
         "prompt": detailed_prompt
     }
     headers = {"Content-Type": "application/json"}
@@ -32,42 +32,36 @@ def generate_code_with_llama(prompt):
         print("JSON decoding failed:", e)
         return ""
 
-        return ""
-
 def filter_code_from_response(response):
-    """
-    Filter out only code from the response.
-    This is a simple heuristic that might need adjustments based on actual output.
-    """
-    # Split the response by lines and filter out lines that are likely not code
     lines = response.split('\n')
     code_lines = [line for line in lines if line.strip() and not line.strip().startswith('//')]
     return '\n'.join(code_lines)
 
-def save_code_to_file(code, filename="generated_code.html"):  # Changed to .html for appropriateness
-    """
-    Save the generated code to a file, removing triple backticks at the start and attempting to exclude any non-HTML content.
-    """
-    # Remove triple backticks at the start if present
+def save_code_to_file(code, filename="generated_code.html"):
     if code.startswith("```"):
         code = code[3:]
-
-    # Attempt to isolate HTML content by only keeping everything up to the closing </html> tag
     html_end_index = code.rfind('</html>')
     if html_end_index != -1:
-        # Include the length of '</html>' (7 characters) to keep the closing tag
         code = code[:html_end_index + 7]
-
     with open(filename, 'w') as file:
-        file.write(code.strip())  # Use strip() to remove leading/trailing whitespace
+        file.write(code.strip())
     print(f"Code saved to {filename}")
-
 
 def main():
     prompt = input("Enter your prompt for LLaMA 2: ")
-    generated_code = generate_code_with_llama(prompt)
+    print("Select the LLaMA model version (Choose the one you downloaded earlier):")
+    print("1. codellama")
+    print("2. llama3:8b")
+    print("3. llama3:70b")
+    model_choice = input("Enter the number of your choice (1-3): ")
+    model_dict = {
+        "1": "codellama",
+        "2": "llama3:8b",
+        "3": "llama3:70b"
+    }
+    model_version = model_dict.get(model_choice, "llama3:8b")  # Default to 'llama3:8b' if invalid input
+    generated_code = generate_code_with_llama(prompt, model_version)
     if generated_code:
-        # Filter out non-code parts from the response
         code_only = filter_code_from_response(generated_code)
         save_code_to_file(code_only)
 
