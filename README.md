@@ -2,7 +2,7 @@
 
 ## What is it?
 
-The Llama Code Generator leverages the Llama 2 AI model to automatically generate website code based on user prompts. The code is then saved to an HTML file.
+The Llama Code Generator leverages the Llama 2 or 3 AI model to automatically generate website code based on user prompts. The code is then saved to an HTML file.
 
 ## Requirements
 
