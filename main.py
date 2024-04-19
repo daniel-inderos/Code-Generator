@@ -48,11 +48,11 @@ def save_code_to_file(code, filename="generated_code.html"):
     print(f"Code saved to {filename}")
 
 def main():
-    prompt = input("Enter your prompt for LLaMA 2: ")
+    prompt = input("Enter your prompt for" model_choice":")
     print("Select the LLaMA model version (Choose the one you downloaded earlier):")
-    print("1. codellama")
-    print("2. llama3:8b")
-    print("3. llama3:70b")
+    print("1. Codellama")
+    print("2. Llama3:8b")
+    print("3. Llama3:70b")
     model_choice = input("Enter the number of your choice (1-3): ")
     model_dict = {
         "1": "codellama",
