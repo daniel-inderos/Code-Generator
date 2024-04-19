@@ -24,10 +24,12 @@ Follow these steps to get your website code generated:
 6. **Run the Script**:
    - Open a different terminal window.
    - Run `python main.py`.
-7. **Input Your Prompt**:
+7. **Choose your model of choice**
+   - When prompted, choose the model that you want to use/the model you downloaded earlier.
+8. **Input Your Prompt**:
    - When prompted with "Enter your prompt for LLaMA 2:", type your desired website specifics.
    - Press Enter.
-8. **Wait for Generation**:
+9. **Wait for Generation**:
    - The code generation process will begin; this might take some time depending on the complexity of the prompt.
-9. **Access Generated Code**:
+10. **Access Generated Code**:
    - Once completed, the `generated_code.html` file will be saved in the same directory where `main.py` is located.
