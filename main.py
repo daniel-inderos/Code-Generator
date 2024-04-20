@@ -58,7 +58,7 @@ def main():
         "2": "llama3:8b",
         "3": "llama3:70b"
     }
-    prompt = input("Enter your prompt for" model_choice":")
+    prompt = input(f"Enter your prompt for {model_dict[model_choice]}: ")
     model_version = model_dict.get(model_choice, "llama3:8b")  # Default to 'llama3:8b' if invalid input
     generated_code = generate_code_with_llama(prompt, model_version)
     if generated_code:
