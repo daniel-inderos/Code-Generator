@@ -1,10 +1,14 @@
 import requests
 import json
 import tkinter as tk
-from tkinter import messagebox, filedialog
+from tkinter import messagebox, filedialog, ttk
+import threading
+import os
 
-def generate_code_with_llama(prompt, model_version):
-    url = "http://localhost:11434/api/generate"
+# List of available models
+available_models = ["llama3", "phi3", "aya", "mistral", "gemma", "mixtral", "llama2", "codegemma"]
+
+def generate_code_with_llama(prompt, model_version, url):
     detailed_prompt = f"Provide only the HTML, CSS, and JavaScript code for a complete single-file webpage. Do not include any introductory text, comments, or explanations: {prompt}"
     payload = {
         "model": model_version,
@@ -49,43 +53,95 @@ def save_code_to_file(code, filename):
         file.write(code.strip())
     messagebox.showinfo("Success", f"Code saved to {filename}")
 
+def load_config():
+    config_path = 'config.json'
+    if os.path.exists(config_path):
+        with open(config_path, 'r') as config_file:
+            return json.load(config_file)
+    else:
+        return {"api_url": "http://localhost:11434/api/generate"}
+
+def save_config(config):
+    with open('config.json', 'w') as config_file:
+        json.dump(config, config_file)
+
+def open_model_selection():
+    def on_select_model():
+        selected_model = model_listbox.get(model_listbox.curselection())
+        model_var.set(selected_model)
+        model_selection_window.destroy()
+
+    model_selection_window = tk.Toplevel(app)
+    model_selection_window.title("Select Model")
+
+    tk.Label(model_selection_window, text="Available Models").pack(pady=10)
+    model_listbox = tk.Listbox(model_selection_window)
+    for model in available_models:
+        model_listbox.insert(tk.END, model)
+    model_listbox.pack(pady=10)
+    tk.Button(model_selection_window, text="Select", command=on_select_model).pack(pady=10)
+
 def on_generate_code():
-    model_choice = model_var.get()
-    model_dict = {
-        "Codellama": "codellama",
-        "Llama3:8b": "llama3:8b",
-        "Llama3:70b": "llama3:70b"
-    }
-    model_version = model_dict.get(model_choice)
+    model_version = model_var.get()
     prompt = prompt_entry.get("1.0", tk.END).strip()
 
     if not model_version or not prompt:
         messagebox.showwarning("Input Error", "Please select a model and enter a prompt.")
         return
 
-    response_text = generate_code_with_llama(prompt, model_version)
-    if response_text:
-        generated_code = parse_generated_code(response_text)
-        if generated_code:
-            code_only = filter_code_from_response(generated_code)
-            filename = filedialog.asksaveasfilename(defaultextension=".html", filetypes=[("HTML files", "*.html")])
-            if filename:
-                save_code_to_file(code_only, filename)
+    def run_generation():
+        progress_bar.start()
+        response_text = generate_code_with_llama(prompt, model_version, config['api_url'])
+        progress_bar.stop()
+        if response_text:
+            generated_code = parse_generated_code(response_text)
+            if generated_code:
+                code_only = filter_code_from_response(generated_code)
+                code_display.delete("1.0", tk.END)
+                code_display.insert(tk.END, code_only)
+                save_button.config(state=tk.NORMAL)
+
+    threading.Thread(target=run_generation).start()
+
+def on_save_code():
+    code = code_display.get("1.0", tk.END).strip()
+    if code:
+        filename = filedialog.asksaveasfilename(defaultextension=".html", filetypes=[("HTML files", "*.html")])
+        if filename:
+            save_code_to_file(code, filename)
 
 app = tk.Tk()
 app.title("LLaMA Code Generator")
 
-model_var = tk.StringVar(value="Codellama")
+config = load_config()
 
-tk.Label(app, text="Select LLaMA Model Version:").pack(pady=5)
-models = ["Codellama", "Llama3:8b", "Llama3:70b"]
-for model in models:
-    tk.Radiobutton(app, text=model, variable=model_var, value=model).pack(anchor=tk.W)
+# Configure styles
+style = ttk.Style(app)
+style.theme_use("clam")
 
-tk.Label(app, text="Enter your prompt:").pack(pady=5)
-prompt_entry = tk.Text(app, height=10, width=50)
-prompt_entry.pack(pady=5)
+frame = ttk.Frame(app, padding="10")
+frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
 
-tk.Button(app, text="Generate Code", command=on_generate_code).pack(pady=20)
+tk.Label(frame, text="Select LLaMA Model Version:").grid(row=0, column=0, pady=5, sticky=tk.W)
+model_var = tk.StringVar()
+ttk.Button(frame, text="Select Model", command=open_model_selection).grid(row=1, column=0, pady=5, sticky=tk.W)
+model_selected_label = ttk.Label(frame, textvariable=model_var)
+model_selected_label.grid(row=2, column=0, pady=5, sticky=tk.W)
+
+tk.Label(frame, text="Enter your prompt:").grid(row=3, column=0, pady=5, sticky=tk.W)
+prompt_entry = tk.Text(frame, height=10, width=50)
+prompt_entry.grid(row=4, column=0, pady=5)
+
+generate_button = ttk.Button(frame, text="Generate Code", command=on_generate_code)
+generate_button.grid(row=5, column=0, pady=10, sticky=tk.W)
+
+progress_bar = ttk.Progressbar(frame, mode='indeterminate')
+progress_bar.grid(row=6, column=0, pady=10, sticky=(tk.W, tk.E))
+
+code_display = tk.Text(frame, height=15, width=50)
+code_display.grid(row=7, column=0, pady=5)
+
+save_button = ttk.Button(frame, text="Save Code to File", command=on_save_code, state=tk.DISABLED)
+save_button.grid(row=8, column=0, pady=5, sticky=tk.W)
 
 app.mainloop()
