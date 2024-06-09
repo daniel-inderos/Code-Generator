@@ -4,7 +4,7 @@ import json
 def generate_code_with_llama(prompt, model_version):
     print("Sending request to AI model...")
     url = "http://localhost:11434/api/generate"
-    detailed_prompt = f"Generate a complete single-file HTML webpage that includes embedded CSS and JavaScript (if necessary) directly within the file. The page should follow the specifications provided by the user without any additional comments or narrative explanations.: {prompt}"
+    detailed_prompt = f"Provide only the HTML, CSS, and JavaScript code for a complete single-file webpage. Do not include any introductory text, comments, or explanations: {prompt}"
     payload = {
         "model": model_version,
         "prompt": detailed_prompt
