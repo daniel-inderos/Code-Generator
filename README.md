@@ -27,7 +27,7 @@ Follow these steps to get your website code generated:
 7. **Choose your model of choice**
    - When prompted, choose the model that you want to use/the model you downloaded earlier.
 8. **Input Your Prompt**:
-   - When prompted with "Enter your prompt for LLaMA 2:", type your desired website specifics.
+   - When prompted, type your desired website specifics.
    - Press Enter.
 9. **Wait for Generation**:
    - The code generation process will begin; this might take some time depending on the complexity of the prompt.
