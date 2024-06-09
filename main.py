@@ -13,23 +13,25 @@ def generate_code_with_llama(prompt, model_version):
     
     try:
         response = requests.post(url, json=payload, headers=headers)
-        print("Request sent. Status code:", response.status_code)
-        print("Raw response text:", response.text)  
-    except Exception as e:
-        print("Failed to send request:", e)
+        response.raise_for_status()
+        print("Request sent successfully.")
+        return response.text.strip()
+    except requests.RequestException as e:
+        print(f"Failed to send request: {e}")
         return ""
-    
+
+def parse_generated_code(response_text):
     try:
-        responses = response.text.strip().split('\n')
+        responses = response_text.split('\n')
         generated_code = ""
         for json_response in responses:
             response_data = json.loads(json_response)
-            if 'done' in response_data and response_data['done']:
+            if response_data.get('done'):
                 break
             generated_code += response_data.get('response', '')
         return generated_code
-    except ValueError as e:
-        print("JSON decoding failed:", e)
+    except json.JSONDecodeError as e:
+        print(f"Failed to decode JSON response: {e}")
         return ""
 
 def filter_code_from_response(response):
@@ -58,12 +60,15 @@ def main():
         "2": "llama3:8b",
         "3": "llama3:70b"
     }
-    prompt = input(f"Enter your prompt for {model_dict[model_choice]}: ")
     model_version = model_dict.get(model_choice, "llama3:8b")  # Default to 'llama3:8b' if invalid input
-    generated_code = generate_code_with_llama(prompt, model_version)
-    if generated_code:
-        code_only = filter_code_from_response(generated_code)
-        save_code_to_file(code_only)
+    prompt = input(f"Enter your prompt for {model_version}: ")
+    
+    response_text = generate_code_with_llama(prompt, model_version)
+    if response_text:
+        generated_code = parse_generated_code(response_text)
+        if generated_code:
+            code_only = filter_code_from_response(generated_code)
+            save_code_to_file(code_only)
 
 if __name__ == "__main__":
     main()
