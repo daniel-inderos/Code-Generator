@@ -12,7 +12,9 @@ The Local Code Generator leverages Ollama and a local AI model to automatically 
 
 ## How to Run
 
-Follow these steps to get your website code generated:
+### Ollama
+
+Follow these steps to get your website code generated using a local AI model:
 
 1. **Install Python**: 
    - Download and install Python from [Python.org](https://www.python.org).
@@ -60,10 +62,39 @@ Follow these steps to get your website code generated:
     - After the code is generated, you will see it in a text block.
     - Click the `Save Code to File` button, then type the desired file name and choose the location where you want it to be saved.
 
+### OpenAI
+
+1. **Download the Script**:
+   - Download `main.py` from this GitHub repository.
+
+2. **Run the Script**:
+   - Open a new terminal window
+   - Navigate to the directory where `main.py` is located.
+   - Run `python main.py`
+   - A blue GUI should appear.
+
+3. **Set API key and Choose Your Model of Choice**:
+   - Tick the box that says  `Use OpenAI`
+   - Below the text that says `OpenAI API Key`, type or paste in your OpenAI API Key.
+   - Press the `Select Model` button, and a small window will open.
+   - Choose your preferred model from the list.
+   - Click the white `Select` button below the model list.
+
+4. **Input Your Prompt and Send it to the AI Model**:
+   - In the prompt area labeled `Enter your prompt:`, enter what you want your website to be.
+   - Click the `Generate Code` button.
+
+5. **Wait for Generation**:
+    - The code generation process will begin. This might take some time depending on the complexity of the prompt.
+
+6. **Save the Generated Code**:
+    - After the code is generated, you will see it in a text block.
+    - Click the `Save Code to File` button, then type the desired file name and choose the location where you want it to be saved. (If not visible, then make the window bigger.)
+
 ## Additional Notes
 
-- Make sure Ollama is running before executing the Python script.
-- Ensure that you have a stable internet connection for downloading models and dependencies.
+- Make sure Ollama is running before executing the Python script. (Only if you are using Ollama)
+- Ensure that you have a stable internet connection for downloading models and dependancies, and if you are uing OpenAI
 - The generated code will be a complete single-file HTML document including embedded CSS and JavaScript, ready for deployment.
 
 ## Recommended Models
