@@ -97,10 +97,16 @@ Follow these steps to get your website code generated using a local AI model:
 - Ensure that you have a stable internet connection for downloading models and dependancies, and if you are uing OpenAI
 - The generated code will be a complete single-file HTML document including embedded CSS and JavaScript, ready for deployment.
 
-## Recommended Models
+## Recommended Ollama Models
 - llama3
 - codestral
 - codegemma
 - Gemma
 - mistral
 - codellama
+
+## Recommended OpenAI Models
+- gpt-4o
+- gpt-4-turbo
+- gpt-4
+- gpt-3.5-turbo
