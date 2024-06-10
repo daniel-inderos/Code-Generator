@@ -65,3 +65,11 @@ Follow these steps to get your website code generated:
 - Make sure Ollama is running before executing the Python script.
 - Ensure that you have a stable internet connection for downloading models and dependencies.
 - The generated code will be a complete single-file HTML document including embedded CSS and JavaScript, ready for deployment.
+
+## Recommended Models
+- llama3
+- codestral
+- codegemma
+- Gemma
+- mistral
+- codellama
