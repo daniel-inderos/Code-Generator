@@ -6,7 +6,7 @@ import threading
 import os
 
 # List of available models
-available_models = ["llama3", "phi3", "aya", "mistral", "gemma", "mixtral", "llama2", "codegemma"]
+available_models = ["llama3", "phi3", "aya", "mistral", "gemma", "mixtral", "llama2", "codegemma", "codestral"]
 
 def generate_code_with_llama(prompt, model_version, url):
     detailed_prompt = f"Provide only the HTML, CSS, and JavaScript code for a complete single-file webpage. Do not include any introductory text, comments, or explanations: {prompt}"
