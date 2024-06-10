@@ -73,13 +73,14 @@ def open_model_selection():
 
     model_selection_window = tk.Toplevel(app)
     model_selection_window.title("Select Model")
+    model_selection_window.configure(bg="#34495e")
 
-    tk.Label(model_selection_window, text="Available Models").pack(pady=10)
-    model_listbox = tk.Listbox(model_selection_window)
+    tk.Label(model_selection_window, text="Available Models", font=("Helvetica", 14), bg="#34495e", fg="#ecf0f1").pack(pady=10)
+    model_listbox = tk.Listbox(model_selection_window, font=("Helvetica", 12), height=10, selectmode=tk.SINGLE, bg="#2c3e50", fg="#ecf0f1", selectbackground="#3498db")
     for model in available_models:
         model_listbox.insert(tk.END, model)
-    model_listbox.pack(pady=10)
-    tk.Button(model_selection_window, text="Select", command=on_select_model).pack(pady=10)
+    model_listbox.pack(pady=10, padx=10, fill=tk.BOTH, expand=True)
+    tk.Button(model_selection_window, text="Select", command=on_select_model, font=("Helvetica", 12), bg="#3498db", fg="#ecf0f1").pack(pady=10)
 
 def on_generate_code():
     model_version = model_var.get()
@@ -112,24 +113,31 @@ def on_save_code():
 
 app = tk.Tk()
 app.title("LLaMA Code Generator")
+app.geometry("600x700")
+app.configure(bg="#2c3e50")
 
 config = load_config()
 
 # Configure styles
 style = ttk.Style(app)
 style.theme_use("clam")
+style.configure("TFrame", background="#2c3e50")
+style.configure("TLabel", background="#2c3e50", foreground="#ecf0f1", font=("Helvetica", 12))
+style.configure("TButton", background="#3498db", foreground="#ecf0f1", font=("Helvetica", 12))
+style.configure("TText", font=("Courier New", 12), background="#34495e", foreground="#ecf0f1")
+style.configure("TProgressbar", background="#3498db")
 
 frame = ttk.Frame(app, padding="10")
 frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
 
-tk.Label(frame, text="Select LLaMA Model Version:").grid(row=0, column=0, pady=5, sticky=tk.W)
+tk.Label(frame, text="Select LLaMA Model Version:", foreground="#ecf0f1").grid(row=0, column=0, pady=5, sticky=tk.W)
 model_var = tk.StringVar()
 ttk.Button(frame, text="Select Model", command=open_model_selection).grid(row=1, column=0, pady=5, sticky=tk.W)
 model_selected_label = ttk.Label(frame, textvariable=model_var)
 model_selected_label.grid(row=2, column=0, pady=5, sticky=tk.W)
 
-tk.Label(frame, text="Enter your prompt:").grid(row=3, column=0, pady=5, sticky=tk.W)
-prompt_entry = tk.Text(frame, height=10, width=50)
+tk.Label(frame, text="Enter your prompt:", foreground="#ecf0f1").grid(row=3, column=0, pady=5, sticky=tk.W)
+prompt_entry = tk.Text(frame, height=10, width=50, font=("Courier New", 12), wrap=tk.WORD, background="#34495e", foreground="#ecf0f1", insertbackground="#ecf0f1")
 prompt_entry.grid(row=4, column=0, pady=5)
 
 generate_button = ttk.Button(frame, text="Generate Code", command=on_generate_code)
@@ -138,7 +146,7 @@ generate_button.grid(row=5, column=0, pady=10, sticky=tk.W)
 progress_bar = ttk.Progressbar(frame, mode='indeterminate')
 progress_bar.grid(row=6, column=0, pady=10, sticky=(tk.W, tk.E))
 
-code_display = tk.Text(frame, height=15, width=50)
+code_display = tk.Text(frame, height=15, width=50, font=("Courier New", 12), wrap=tk.WORD, background="#34495e", foreground="#ecf0f1", insertbackground="#ecf0f1")
 code_display.grid(row=7, column=0, pady=5)
 
 save_button = ttk.Button(frame, text="Save Code to File", command=on_save_code, state=tk.DISABLED)
