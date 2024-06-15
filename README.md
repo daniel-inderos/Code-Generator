@@ -1,4 +1,4 @@
-# Local Code Generator
+# Code Generator
 
 ## What is it?
 
