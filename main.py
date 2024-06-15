@@ -6,7 +6,7 @@ import threading
 import os
 
 # List of available local models
-available_local_models = ["llama3", "phi3", "aya", "mistral", "gemma", "mixtral", "llama2", "codegemma", "codestral"]
+available_local_models = ["llama3", "aya", "mistral", "gemma", "mixtral", "llama2", "codegemma", "codestral"]
 
 # List of available OpenAI models
 available_openai_models = ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo", "gpt-4o"]
