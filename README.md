@@ -1,4 +1,4 @@
-# Local Code Generator
+# Code Generator
 
 ## What is it?
 
@@ -6,7 +6,7 @@ The Local Code Generator leverages Ollama and a local AI model to automatically 
 
 ## Requirements
 
-- Ollama: to run the AI model. Available at [Ollama](https://ollama.com)
+- Ollama: to run the local AI model (Only if using local AI model) . Available at [Ollama](https://ollama.com)
 - Python: required to execute the script. Available at [Python](https://www.python.org)
 - Additional Python libraries: `requests`, `tkinter`, `threading`
 
