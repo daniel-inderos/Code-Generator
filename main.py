@@ -48,6 +48,10 @@ class CodeGeneratorApp:
         self.use_openai_var = tk.BooleanVar(value=self.config['use_openai'])
         ttk.Checkbutton(api_frame, text="Use OpenAI", variable=self.use_openai_var, command=self.on_toggle_openai, style='Switch.TCheckbutton').pack(anchor=tk.W)
 
+        self.use_local_var = tk.BooleanVar(value=not self.config['use_openai'])
+        self.use_local_checkbutton = ttk.Checkbutton(api_frame, text="Use Local Models", variable=self.use_local_var, command=self.on_toggle_local, style='Switch.TCheckbutton')
+        self.use_local_checkbutton.pack(anchor=tk.W)
+
         api_key_frame = ttk.Frame(api_frame)
         api_key_frame.pack(fill=tk.X, pady=(10, 0))
         ttk.Label(api_key_frame, text="OpenAI API Key:").pack(side=tk.LEFT)
@@ -109,9 +113,18 @@ class CodeGeneratorApp:
         openai_state = tk.NORMAL if self.config['use_openai'] else tk.DISABLED
         self.api_key_entry.config(state=openai_state)
         self.api_key_save_button.config(state=openai_state)
+        local_state = tk.NORMAL if not self.config['use_openai'] else tk.DISABLED
+        self.use_local_checkbutton.config(state=local_state)
 
     def on_toggle_openai(self):
         self.config['use_openai'] = self.use_openai_var.get()
+        self.use_local_var.set(not self.config['use_openai'])
+        self.update_ui_state()
+        self.save_config()
+
+    def on_toggle_local(self):
+        self.config['use_openai'] = not self.use_local_var.get()
+        self.use_openai_var.set(self.config['use_openai'])
         self.update_ui_state()
         self.save_config()
 
