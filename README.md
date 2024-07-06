@@ -18,7 +18,7 @@ The Code Generator is a versatile tool that leverages either Ollama with a local
 
 2. **Clone the repository or download the script**:
    ```
-   git clone https://github.com/yourusername/code-generator.git
+   git clone https://github.com/daniel-inderos/Code-Generator.git
    cd code-generator
    ```
    Or download `main.py` and `requirements.txt` from this GitHub repository.
