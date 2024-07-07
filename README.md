@@ -75,7 +75,8 @@ The Code Generator is a versatile tool that leverages either Ollama with a local
 - llama3
 - codestral
 - codegemma
-- Gemma
+- gemma
+- gemma2
 - mistral
 - codellama
 
