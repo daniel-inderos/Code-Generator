@@ -9,7 +9,7 @@ from ttkbootstrap import Style, PRIMARY, INFO, SUCCESS, WARNING, DANGER
 
 # Constants
 CONFIG_PATH = 'config.json'
-AVAILABLE_LOCAL_MODELS = ["llama3", "aya", "mistral", "gemma", "mixtral", "llama2", "codegemma", "codestral"]
+AVAILABLE_LOCAL_MODELS = ["llama3", "aya", "mistral", "gemma", "gemma2", "mixtral", "llama2", "codegemma", "codestral"]
 AVAILABLE_OPENAI_MODELS = ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo", "gpt-4o"]
 
 class CodeGeneratorApp:
@@ -188,9 +188,19 @@ class CodeGeneratorApp:
         headers = {"Content-Type": "application/json"}
         
         try:
-            response = requests.post(url, json=payload, headers=headers)
+            response = requests.post(url, json=payload, headers=headers, stream=True)
             response.raise_for_status()
-            return response.text.strip()
+            
+            full_response = ""
+            for line in response.iter_lines():
+                if line:
+                    json_response = json.loads(line)
+                    if 'response' in json_response:
+                        full_response += json_response['response']
+                    if json_response.get('done', False):
+                        break
+            
+            return full_response.strip()
         except requests.RequestException as e:
             messagebox.showerror("Error", f"Failed to send request: {e}")
             return ""
