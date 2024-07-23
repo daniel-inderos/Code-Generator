@@ -11,6 +11,31 @@ from ttkbootstrap import Style, PRIMARY, INFO, SUCCESS, WARNING, DANGER
 CONFIG_PATH = 'config.json'
 AVAILABLE_LOCAL_MODELS = ["llama3.1", "llama3", "mistral", "gemma2", "mixtral", "codegemma", "codestral", "mistral-nemo"]
 AVAILABLE_OPENAI_MODELS = ["gpt-4o", "gpt-4o-mini"]
+CODE_TYPES = {
+        "prompt": "Provide only the HTML, CSS, and JavaScript code for a complete single-file webpage. IMPORTANT: Do not include any introductory text, comments, or explanations.",
+        "extension": ".html"
+    },
+    "Python": {
+        "prompt": "Provide only the Python code for the following task. IMPORTANT: Do not include any introductory text, comments, or explanations.",
+        "extension": ".py"
+    },
+    "Java": {
+        "prompt": "Provide only the Java code for the following task. IMPORTANT: Do not include any introductory text, comments, or explanations.",
+        "extension": ".java"
+    },
+    "C++": {
+        "prompt": "Provide only the C++ code for the following task. IMPORTANT: Do not include any introductory text, comments, or explanations.",
+        "extension": ".cpp"
+    },
+    "JavaScript": {
+        "prompt": "Provide only the JavaScript code for the following task. IMPORTANT: Do not include any introductory text, comments, or explanations.",
+        "extension": ".js"
+    },
+    "SQL": {
+        "prompt": "Provide only the SQL code for the following task. IMPORTANT: Do not include any introductory text, comments, or explanations.",
+        "extension": ".sql"
+    }
+}
 
 class CodeGeneratorApp:
     def __init__(self, master):
@@ -61,15 +86,25 @@ class CodeGeneratorApp:
         self.api_key_save_button = ttk.Button(api_key_frame, text="Save API Key", command=self.on_save_api_key, style='Outline.TButton')
         self.api_key_save_button.pack(side=tk.LEFT)
 
-        # Model Selection Frame
-        model_frame = ttk.LabelFrame(main_frame, text="Model Selection", padding="10")
-        model_frame.pack(fill=tk.X, pady=(0, 20))
+        # Model and Code Type Selection Frame
+        selection_frame = ttk.LabelFrame(main_frame, text="Model and Code Type Selection", padding="10")
+        selection_frame.pack(fill=tk.X, pady=(0, 20))
 
+        model_frame = ttk.Frame(selection_frame)
+        model_frame.pack(fill=tk.X, pady=(0, 10))
         self.model_var = tk.StringVar()
         ttk.Label(model_frame, text="Selected Model:").pack(side=tk.LEFT)
         self.model_selected_label = ttk.Label(model_frame, textvariable=self.model_var, font=("Helvetica", 12, "bold"))
         self.model_selected_label.pack(side=tk.LEFT, padx=(10, 20))
         ttk.Button(model_frame, text="Select Model", command=self.open_model_selection, style='Outline.TButton').pack(side=tk.LEFT)
+
+        code_type_frame = ttk.Frame(selection_frame)
+        code_type_frame.pack(fill=tk.X)
+        ttk.Label(code_type_frame, text="Code Type:").pack(side=tk.LEFT)
+        self.code_type_var = tk.StringVar(value=list(CODE_TYPES.keys())[0])
+        code_type_dropdown = ttk.Combobox(code_type_frame, textvariable=self.code_type_var, values=list(CODE_TYPES.keys()), state="readonly")
+        code_type_dropdown.pack(side=tk.LEFT, padx=(10, 0))
+        code_type_dropdown.bind("<<ComboboxSelected>>", self.on_code_type_change)
 
         # Prompt Entry Frame
         prompt_frame = ttk.LabelFrame(main_frame, text="Enter your prompt", padding="10")
@@ -143,109 +178,98 @@ class CodeGeneratorApp:
         
         models = AVAILABLE_OPENAI_MODELS if self.config['use_openai'] else AVAILABLE_LOCAL_MODELS
         for model in models:
-            ttk.Radiobutton(model_selection_window, text=model, value=model, variable=self.model_var).pack(anchor=tk.W, padx=20, pady=5)
+            ttk.Radiobutton(model_selection_window, text=model, value=model, variable=self.model_var, style='Toolbutton').pack(anchor=tk.W, padx=20, pady=5)
 
-        ttk.Button(model_selection_window, text="Select", command=model_selection_window.destroy, style='Accent.TButton').pack(pady=20)
+        ttk.Button(model_selection_window, text="Select", command=model_selection_window.destroy, style='Accent.TButton').pack(pady=10)
+
+    def on_code_type_change(self, event):
+        self.save_button.config(state=tk.DISABLED)
+        self.code_display.delete(1.0, tk.END)
 
     def on_generate_code(self):
-        model_version = self.model_var.get()
         prompt = self.prompt_entry.get("1.0", tk.END).strip()
-
-        if not model_version or not prompt:
-            messagebox.showwarning("Input Error", "Please select a model and enter a prompt.")
+        if not prompt:
+            messagebox.showwarning("Warning", "Please enter a prompt.")
             return
 
+        code_type = self.code_type_var.get()
+        model = self.model_var.get()
+        if not model:
+            messagebox.showwarning("Warning", "Please select a model.")
+            return
+
+        self.status_var.set("Generating code...")
+        self.progress_bar.start()
         self.generate_button.config(state=tk.DISABLED)
         self.save_button.config(state=tk.DISABLED)
-        self.status_var.set("Generating code...")
-        threading.Thread(target=self.run_generation, args=(model_version, prompt)).start()
 
-    def run_generation(self, model_version, prompt):
-        self.progress_bar.start()
-        if self.config['use_openai']:
-            response_text = self.generate_code_with_openai(prompt, model_version, self.config['api_key'])
-        else:
-            response_text = self.generate_code_with_llama(prompt, model_version, self.config['api_url'])
-        self.progress_bar.stop()
-        
-        if response_text:
-            code_only = self.filter_code_from_response(response_text)
-            self.code_display.delete("1.0", tk.END)
-            self.code_display.insert(tk.END, code_only)
-            self.save_button.config(state=tk.NORMAL)
-            self.status_var.set("Code generated successfully.")
-        else:
-            self.status_var.set("Failed to generate code.")
-        
-        self.generate_button.config(state=tk.NORMAL)
+        threading.Thread(target=self.generate_code_thread, args=(prompt, code_type, model)).start()
 
-    def generate_code_with_llama(self, prompt, model_version, url):
-        detailed_prompt = f"Provide only the HTML, CSS, and JavaScript code for a complete good-looking, single-file webpage. IMPORTANT: Do not include any introductory text, comments, or explanations. Do not include any formatting for the code, just the code as plain text: {prompt}"
+    def generate_code_thread(self, prompt, code_type, model):
+        code_type_info = CODE_TYPES[code_type]
+        prompt = f"{code_type_info['prompt']} {prompt}"
+        
         payload = {
-            "model": model_version,
-            "prompt": detailed_prompt
+            "prompt": prompt,
+            "model": model,
+            "api_key": self.config['api_key'] if self.config['use_openai'] else None
         }
-        headers = {"Content-Type": "application/json"}
         
         try:
-            response = requests.post(url, json=payload, headers=headers, stream=True)
+            response = requests.post(self.config['api_url'], json=payload, stream=True)
             response.raise_for_status()
             
-            full_response = ""
+            generated_code = ""
             for line in response.iter_lines():
                 if line:
-                    json_response = json.loads(line)
-                    if 'response' in json_response:
-                        full_response += json_response['response']
-                    if json_response.get('done', False):
-                        break
+                    try:
+                        json_response = json.loads(line)
+                        generated_code += json_response.get("response", "")
+                    except json.JSONDecodeError as e:
+                        print(f"Failed to parse JSON: {e}")
+                        print(f"Problematic line: {line}")
             
-            return full_response.strip()
+            filtered_code = self.filter_code_from_response(generated_code, code_type)
+            
+            self.master.after(0, self.display_generated_code, filtered_code)
         except requests.RequestException as e:
-            messagebox.showerror("Error", f"Failed to send request: {e}")
-            return ""
+            self.master.after(0, messagebox.showerror, "Error", f"Failed to generate code: {str(e)}")
+        finally:
+            self.master.after(0, self.reset_ui_state)
 
-    def generate_code_with_openai(self, prompt, model_version, api_key):
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {api_key}"
-        }
-        payload = {
-            "model": model_version,
-            "messages": [{"role": "system", "content": "Provide only the HTML, CSS, and JavaScript code for a complete single-file webpage. IMPORTANT: Do not include any introductory text, comments, or explanations."},
-                         {"role": "user", "content": prompt}]
-        }
-        
-        try:
-            response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
-            response.raise_for_status()
-            return response.json()['choices'][0]['message']['content']
-        except requests.RequestException as e:
-            messagebox.showerror("Error", f"Failed to send request: {e}")
-            return ""
 
-    def filter_code_from_response(self, response):
-        lines = response.split('\n')
-        code_lines = [line for line in lines if line.strip() and not line.strip().startswith('//')]
-        return '\n'.join(code_lines)
+    def filter_code_from_response(self, response, code_type):
+        if code_type == "Website (HTML/CSS/JS)":
+            return response  # Assume the response is a complete HTML file.
+        lines = response.split("\n")
+        code_lines = []
+        for line in lines:
+            if not line.strip().startswith("#"):  # Filter out comments.
+                code_lines.append(line)
+        return "\n".join(code_lines)
+
+    def display_generated_code(self, code):
+        self.code_display.delete(1.0, tk.END)
+        self.code_display.insert(tk.END, code)
+        self.save_button.config(state=tk.NORMAL)
 
     def on_save_code(self):
-        code = self.code_display.get("1.0", tk.END).strip()
-        if code:
-            filename = filedialog.asksaveasfilename(defaultextension=".html", filetypes=[("HTML files", "*.html")])
-            if filename:
-                self.save_code_to_file(code, filename)
+        code_type = self.code_type_var.get()
+        extension = CODE_TYPES[code_type]["extension"]
+        file_path = filedialog.asksaveasfilename(defaultextension=extension, filetypes=[(f"{code_type} files", f"*{extension}"), ("All files", "*.*")])
+        if file_path:
+            code = self.code_display.get("1.0", tk.END).strip()
+            try:
+                with open(file_path, "w") as file:
+                    file.write(code)
+                messagebox.showinfo("Success", f"Code saved successfully to {file_path}.")
+            except IOError as e:
+                messagebox.showerror("Error", f"Failed to save code: {str(e)}")
 
-    def save_code_to_file(self, code, filename):
-        if code.startswith("```"):
-            code = code[3:]
-        html_end_index = code.rfind('</html>')
-        if html_end_index != -1:
-            code = code[:html_end_index + 7]
-        with open(filename, 'w') as file:
-            file.write(code.strip())
-        messagebox.showinfo("Success", f"Code saved to {filename}")
-        self.status_var.set(f"Code saved to {filename}")
+    def reset_ui_state(self):
+        self.status_var.set("Ready")
+        self.progress_bar.stop()
+        self.generate_button.config(state=tk.NORMAL)
 
 if __name__ == "__main__":
     root = tk.Tk()
