@@ -72,19 +72,19 @@ The Code Generator is a versatile tool that leverages either Ollama with a local
 ## Recommended Models
 
 ### Ollama Models
+
+- llama3.1
 - llama3
 - codestral
 - codegemma
-- gemma
 - gemma2
 - mistral
-- codellama
+- mixtral
+- mistral-nemo
 
 ### OpenAI Models
 - gpt-4o
-- gpt-4-turbo
-- gpt-4
-- gpt-3.5-turbo
+- gpt-4o-mini
 
 ## Additional Notes
 

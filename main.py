@@ -9,8 +9,8 @@ from ttkbootstrap import Style, PRIMARY, INFO, SUCCESS, WARNING, DANGER
 
 # Constants
 CONFIG_PATH = 'config.json'
-AVAILABLE_LOCAL_MODELS = ["llama3", "aya", "mistral", "gemma", "gemma2", "mixtral", "llama2", "codegemma", "codestral"]
-AVAILABLE_OPENAI_MODELS = ["gpt-4", "gpt-4o", "gpt-4o-mini"]
+AVAILABLE_LOCAL_MODELS = ["llama3.1", "llama3", "mistral", "gemma2", "mixtral", "codegemma", "codestral", "mistral-nemo"]
+AVAILABLE_OPENAI_MODELS = ["gpt-4o", "gpt-4o-mini"]
 
 class CodeGeneratorApp:
     def __init__(self, master):
