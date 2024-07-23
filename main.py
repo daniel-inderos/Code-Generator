@@ -12,6 +12,7 @@ CONFIG_PATH = 'config.json'
 AVAILABLE_LOCAL_MODELS = ["llama3.1", "llama3", "mistral", "gemma2", "mixtral", "codegemma", "codestral", "mistral-nemo"]
 AVAILABLE_OPENAI_MODELS = ["gpt-4o", "gpt-4o-mini"]
 CODE_TYPES = {
+    "Website (HTML/CSS/JS)": {
         "prompt": "Provide only the HTML, CSS, and JavaScript code for a complete single-file webpage. IMPORTANT: Do not include any introductory text, comments, or explanations.",
         "extension": ".html"
     },
