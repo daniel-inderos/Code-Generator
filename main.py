@@ -6,11 +6,18 @@ import threading
 import os
 from functools import partial
 from ttkbootstrap import Style, PRIMARY, INFO, SUCCESS, WARNING, DANGER
+from groq import Groq
 
 # Constants
 CONFIG_PATH = 'config.json'
 AVAILABLE_LOCAL_MODELS = ["llama3.1", "llama3", "mistral", "gemma2", "mixtral", "codegemma", "codestral", "mistral-nemo"]
 AVAILABLE_OPENAI_MODELS = ["gpt-4o", "gpt-4o-mini"]
+AVAILABLE_GROQ_MODELS = {
+    "LLaMA 3.1 8b": "llama-3.1-8b-instant",
+    "LLaMA 3.1 70b": "llama-3.1-70b-versatile",
+    "LLaMA 3.1 405b": "llama-3.1-405b-reasoning",
+    "Gemma 2 9b": "gemma2-9b-it"
+}
 CODE_TYPES = {
     "Website (HTML/CSS/JS)": {
         "prompt": "Provide only the HTML, CSS, and JavaScript code for a complete single-file webpage. IMPORTANT: Do not include any introductory text, comments, or explanations.",
@@ -48,13 +55,14 @@ class CodeGeneratorApp:
         self.master.configure(bg=self.style.colors.bg)
 
         self.config = self.load_config()
+        self.groq_client = Groq(api_key=self.config.get('groq_api_key'))
         self.setup_ui()
 
     def load_config(self):
         if os.path.exists(CONFIG_PATH):
             with open(CONFIG_PATH, 'r') as config_file:
                 return json.load(config_file)
-        return {"api_url": "http://localhost:11434/api/generate", "api_key": "", "use_openai": False}
+        return {"api_url": "http://localhost:11434/api/generate", "api_key": "", "use_openai": False, "use_groq": False, "groq_api_key": ""}
 
     def save_config(self):
         with open(CONFIG_PATH, 'w') as config_file:
@@ -74,16 +82,19 @@ class CodeGeneratorApp:
         self.use_openai_var = tk.BooleanVar(value=self.config['use_openai'])
         ttk.Checkbutton(api_frame, text="Use OpenAI", variable=self.use_openai_var, command=self.on_toggle_openai, style='Switch.TCheckbutton').pack(anchor=tk.W)
 
-        self.use_local_var = tk.BooleanVar(value=not self.config['use_openai'])
+        self.use_groq_var = tk.BooleanVar(value=self.config['use_groq'])
+        ttk.Checkbutton(api_frame, text="Use GROQ", variable=self.use_groq_var, command=self.on_toggle_groq, style='Switch.TCheckbutton').pack(anchor=tk.W)
+
+        self.use_local_var = tk.BooleanVar(value=not self.config['use_openai'] and not self.config['use_groq'])
         self.use_local_checkbutton = ttk.Checkbutton(api_frame, text="Use Local Models", variable=self.use_local_var, command=self.on_toggle_local, style='Switch.TCheckbutton')
         self.use_local_checkbutton.pack(anchor=tk.W)
 
         api_key_frame = ttk.Frame(api_frame)
         api_key_frame.pack(fill=tk.X, pady=(10, 0))
-        ttk.Label(api_key_frame, text="OpenAI API Key:").pack(side=tk.LEFT)
+        ttk.Label(api_key_frame, text="OpenAI/GROQ API Key:").pack(side=tk.LEFT)
         self.api_key_entry = ttk.Entry(api_key_frame, show='*', width=40)
         self.api_key_entry.pack(side=tk.LEFT, padx=(10, 10))
-        self.api_key_entry.insert(0, self.config['api_key'])
+        self.api_key_entry.insert(0, self.config['api_key'] if self.config['use_openai'] else self.config['groq_api_key'])
         self.api_key_save_button = ttk.Button(api_key_frame, text="Save API Key", command=self.on_save_api_key, style='Outline.TButton')
         self.api_key_save_button.pack(side=tk.LEFT)
 
@@ -147,25 +158,43 @@ class CodeGeneratorApp:
 
     def update_ui_state(self):
         openai_state = tk.NORMAL if self.config['use_openai'] else tk.DISABLED
-        self.api_key_entry.config(state=openai_state)
-        self.api_key_save_button.config(state=openai_state)
-        local_state = tk.NORMAL if not self.config['use_openai'] else tk.DISABLED
+        self.api_key_entry.config(state=openai_state if self.config['use_openai'] else tk.NORMAL if self.config['use_groq'] else tk.DISABLED)
+        self.api_key_save_button.config(state=openai_state if self.config['use_openai'] else tk.NORMAL if self.config['use_groq'] else tk.DISABLED)
+        local_state = tk.NORMAL if not self.config['use_openai'] and not self.config['use_groq'] else tk.DISABLED
         self.use_local_checkbutton.config(state=local_state)
 
     def on_toggle_openai(self):
         self.config['use_openai'] = self.use_openai_var.get()
-        self.use_local_var.set(not self.config['use_openai'])
+        if self.config['use_openai']:
+            self.config['use_groq'] = False
+            self.use_groq_var.set(False)
+        self.use_local_var.set(not self.config['use_openai'] and not self.config['use_groq'])
+        self.update_ui_state()
+        self.save_config()
+
+    def on_toggle_groq(self):
+        self.config['use_groq'] = self.use_groq_var.get()
+        if self.config['use_groq']:
+            self.config['use_openai'] = False
+            self.use_openai_var.set(False)
+        self.use_local_var.set(not self.config['use_openai'] and not self.config['use_groq'])
         self.update_ui_state()
         self.save_config()
 
     def on_toggle_local(self):
-        self.config['use_openai'] = not self.use_local_var.get()
-        self.use_openai_var.set(self.config['use_openai'])
+        self.config['use_openai'] = False
+        self.use_openai_var.set(False)
+        self.config['use_groq'] = False
+        self.use_groq_var.set(False)
+        self.use_local_var.set(True)
         self.update_ui_state()
         self.save_config()
 
     def on_save_api_key(self):
-        self.config['api_key'] = self.api_key_entry.get().strip()
+        if self.config['use_openai']:
+            self.config['api_key'] = self.api_key_entry.get().strip()
+        elif self.config['use_groq']:
+            self.config['groq_api_key'] = self.api_key_entry.get().strip()
         self.save_config()
         messagebox.showinfo("Success", "API key saved successfully.")
 
@@ -177,7 +206,13 @@ class CodeGeneratorApp:
 
         ttk.Label(model_selection_window, text="Available Models", font=("Helvetica", 14, "bold")).pack(pady=10)
         
-        models = AVAILABLE_OPENAI_MODELS if self.config['use_openai'] else AVAILABLE_LOCAL_MODELS
+        if self.config['use_openai']:
+            models = AVAILABLE_OPENAI_MODELS
+        elif self.config['use_groq']:
+            models = AVAILABLE_GROQ_MODELS
+        else:
+            models = AVAILABLE_LOCAL_MODELS
+
         for model in models:
             ttk.Radiobutton(model_selection_window, text=model, value=model, variable=self.model_var, style='Toolbutton').pack(anchor=tk.W, padx=20, pady=5)
 
@@ -209,35 +244,62 @@ class CodeGeneratorApp:
     def generate_code_thread(self, prompt, code_type, model):
         code_type_info = CODE_TYPES[code_type]
         prompt = f"{code_type_info['prompt']} {prompt}"
-        
-        payload = {
-            "prompt": prompt,
-            "model": model,
-            "api_key": self.config['api_key'] if self.config['use_openai'] else None
-        }
-        
-        try:
-            response = requests.post(self.config['api_url'], json=payload, stream=True)
-            response.raise_for_status()
-            
-            generated_code = ""
-            for line in response.iter_lines():
-                if line:
-                    try:
-                        json_response = json.loads(line)
-                        generated_code += json_response.get("response", "")
-                    except json.JSONDecodeError as e:
-                        print(f"Failed to parse JSON: {e}")
-                        print(f"Problematic line: {line}")
-            
-            filtered_code = self.filter_code_from_response(generated_code, code_type)
-            
-            self.master.after(0, self.display_generated_code, filtered_code)
-        except requests.RequestException as e:
-            self.master.after(0, messagebox.showerror, "Error", f"Failed to generate code: {str(e)}")
-        finally:
-            self.master.after(0, self.reset_ui_state)
 
+        if self.config['use_openai']:
+            payload = {
+                "prompt": prompt,
+                "model": model,
+                "api_key": self.config['api_key']
+            }
+            try:
+                response = requests.post(self.config['api_url'], json=payload, stream=True)
+                response.raise_for_status()
+
+                generated_code = ""
+                for line in response.iter_lines():
+                    if line:
+                        try:
+                            json_response = json.loads(line)
+                            generated_code += json_response.get("response", "")
+                        except json.JSONDecodeError as e:
+                            print(f"Failed to parse JSON: {e}")
+                            print(f"Problematic line: {line}")
+
+                filtered_code = self.filter_code_from_response(generated_code, code_type)
+                self.master.after(0, self.display_generated_code, filtered_code)
+            except requests.RequestException as e:
+                self.master.after(0, messagebox.showerror, "Error", f"Failed to generate code: {str(e)}")
+            finally:
+                self.master.after(0, self.reset_ui_state)
+        elif self.config['use_groq']:
+            try:
+                model_version = AVAILABLE_GROQ_MODELS.get(model)
+                if not model_version:
+                    raise ValueError(f"Invalid GROQ model: {model}")
+
+                chat_completion = self.groq_client.chat.completions.create(
+                    messages=[
+                        {"role": "user", "content": prompt}
+                    ],
+                    model=model_version,
+                )
+                generated_code = chat_completion.choices[0].message.content
+                filtered_code = self.filter_code_from_response(generated_code, code_type)
+                self.master.after(0, self.display_generated_code, filtered_code)
+            except Exception as e:
+                self.master.after(0, messagebox.showerror, "Error", f"Failed to generate code with GROQ: {str(e)}")
+            finally:
+                self.master.after(0, self.reset_ui_state)
+        else:
+            # Assuming you have a function `generate_code_with_local_model`
+            try:
+                generated_code = generate_code_with_local_model(prompt, model)
+                filtered_code = self.filter_code_from_response(generated_code, code_type)
+                self.master.after(0, self.display_generated_code, filtered_code)
+            except Exception as e:
+                self.master.after(0, messagebox.showerror, "Error", f"Failed to generate code with local model: {str(e)}")
+            finally:
+                self.master.after(0, self.reset_ui_state)
 
     def filter_code_from_response(self, response, code_type):
         if code_type == "Website (HTML/CSS/JS)":
