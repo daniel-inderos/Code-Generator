@@ -61,12 +61,38 @@ class CodeGeneratorApp:
     def load_config(self):
         if os.path.exists(CONFIG_PATH):
             with open(CONFIG_PATH, 'r') as config_file:
-                return json.load(config_file)
-        return {"api_url": "http://localhost:11434/api/generate", "api_key": "", "use_openai": False, "use_groq": False, "groq_api_key": ""}
+                config = json.load(config_file)
+                # Add default values for missing keys
+                default_config = {
+                    "api_url": "http://localhost:11434/api/generate",
+                    "api_key": "",
+                    "use_openai": False,
+                    "use_groq": False,  # Add this line
+                    "groq_api_key": ""
+                }
+                # Update the loaded config with default values for missing keys
+                for key, value in default_config.items():
+                    if key not in config:
+                        config[key] = value
+                return config
+        return {
+            "api_url": "http://localhost:11434/api/generate",
+            "api_key": "",
+            "use_openai": False,
+            "use_groq": False,  # Add this line
+            "groq_api_key": ""
+        }
 
     def save_config(self):
+        config_to_save = {
+            "api_url": self.config["api_url"],
+            "api_key": self.config["api_key"],
+            "use_openai": self.config["use_openai"],
+            "use_groq": self.config["use_groq"],
+            "groq_api_key": self.config["groq_api_key"]
+        }
         with open(CONFIG_PATH, 'w') as config_file:
-            json.dump(self.config, config_file)
+            json.dump(config_to_save, config_file)
 
     def setup_ui(self):
         main_frame = ttk.Frame(self.master, padding="20 20 20 0")
